@@ -3,11 +3,11 @@ import { visit } from 'unist-util-visit';
 
 const MAX_HEADING_DEPTH = 6
 
-function plugin () {
+function plugin() {
   return transform
 }
 
-function transform (tree) {
+function transform(tree) {
   for (let depth = MAX_HEADING_DEPTH; depth > 0; depth--) {
     visit(
       tree,
@@ -17,19 +17,22 @@ function transform (tree) {
   }
 }
 
-function sectionize (node, index, parent) {
-  const start = node
+function sectionize(node, index, parent) {
+  const startNode = node
   const startIndex = index
-  const depth = start.depth
+  const depth = startNode.depth
 
   const isEnd = node => node.type === 'heading' && node.depth <= depth || node.type === 'export'
-  const end = findAfter(parent, start, isEnd)
-  const endIndex = parent.children.indexOf(end)
+  const endNode = findAfter(parent, startNode, isEnd)
+  const endIndex = parent.children.indexOf(endNode)
 
   const between = parent.children.slice(
     startIndex,
     endIndex > 0 ? endIndex : undefined
   )
+
+  const start = between[0]?.position?.start;
+  const end = between[between.length - 1]?.position?.end;
 
   const section = {
     type: 'section',
@@ -37,7 +40,8 @@ function sectionize (node, index, parent) {
     children: between,
     data: {
       hName: 'section'
-    }
+    },
+    position: { start, end },
   }
 
   parent.children.splice(startIndex, section.children.length, section)
